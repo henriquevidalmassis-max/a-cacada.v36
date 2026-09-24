@@ -198,11 +198,11 @@ setupDice();
 <script>
 /* ===== A CAÇADA V7 — CAMPANHAS ONLINE ===== */
 let sb=null, onlineReady=false, sessionUser=null, readOnly=false;
-const cfg=window.ACACADA_CONFIG||{};
+const cfg=window.ACACADA_CONFIG&&window.ACACADA_CONFIG.supabaseUrl&&window.ACACADA_CONFIG.supabaseKey?window.ACACADA_CONFIG:{supabaseUrl:"https://papoezyzwaeevnpbzhmm.supabase.co",supabaseKey:"sb_publishable__DTF6PiAw5o-wOQxystiHg_M5bmUVJc"};
 function onlineConfigured(){return cfg.supabaseUrl && cfg.supabaseKey && !cfg.supabaseUrl.includes('COLE_AQUI') && !cfg.supabaseKey.includes('COLE_AQUI')}
 async function initOnline(){
   const st=document.getElementById('onlineStatus');
-  if(!onlineConfigured()){onlineReady=false;if(st)st.innerHTML='<b>Modo local:</b> o banco online ainda não foi configurado. As fichas locais continuam funcionando.';return}
+  if(!onlineConfigured()){onlineReady=false;return}
   try{
     sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
     let r=await sb.auth.getSession();
@@ -211,7 +211,7 @@ async function initOnline(){
     sessionUser=r.data.user; onlineReady=true;
     if(st)st.innerHTML='<b>☁ Banco online conectado.</b> Campanhas e fichas da sala podem ser compartilhadas entre celulares.';
     const m=location.hash.match(/camp=([A-Z0-9-]+)/i); if(m) await openOnlineCampaign(m[1]);
-  }catch(e){console.error(e);onlineReady=false;if(st)st.innerHTML='<b>Erro no banco online.</b> Verifique config.js e se o login anônimo está ativado no Supabase.'}
+  }catch(e){console.error(e);onlineReady=false;if(st)st.innerHTML='<b>Não foi possível conectar ao servidor.</b> Tente novamente.'}
 }
 function v7Camps(){return JSON.parse(localStorage.getItem('onlineCamps')||'[]')}
 function rememberCamp(c){let a=v7Camps().filter(x=>x.code!==c.code);a.unshift(c);localStorage.setItem('onlineCamps',JSON.stringify(a.slice(0,30)))}
