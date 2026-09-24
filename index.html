@@ -106,20 +106,20 @@ function loadCampaignFromHash(){
 const $=id=>document.getElementById(id);
 function go(id){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");if(id==="chars")renderChars();if(id==="campaigns")renderCamps();if(id==="dice")setupDice()}
 function rid(){return Math.random().toString(36).slice(2,8).toUpperCase()}
-function newCampaign(){let c={id:rid(),name:"A Caçada — Nova Campanha",chars:[]};localStorage.setItem("camp_"+c.id,JSON.stringify(c));openCamp(c)}
-function renderCamps(){let b=document.getElementById("campList"),ks=Object.keys(localStorage).filter(k=>k.startsWith("camp_"));b.innerHTML=ks.length?ks.map(k=>{let c=JSON.parse(localStorage[k]);return `<div class="card"><b>${c.name}</b><div class="small">Código: ${c.id}</div><button class="btn" onclick='openCamp(${JSON.stringify(c)})'>Abrir</button></div>`}).join(""):"<p class='small'>Nenhuma campanha criada.</p>"}
-function enterCampaign(){let v=campInput.value.trim().split("/").pop().replace("#camp=","");let c=JSON.parse(localStorage.getItem("camp_"+v));if(c)openCamp(c);else alert("Campanha não encontrada neste navegador. A versão online usará banco de dados para compartilhar a sala entre dispositivos.")}
+function newLocalCampaignLegacy(){let c={id:rid(),name:"A Caçada — Nova Campanha",chars:[]};localStorage.setItem("camp_"+c.id,JSON.stringify(c));openCamp(c)}
+function renderLocalCampsLegacy(){let b=document.getElementById("campList"),ks=Object.keys(localStorage).filter(k=>k.startsWith("camp_"));b.innerHTML=ks.length?ks.map(k=>{let c=JSON.parse(localStorage[k]);return `<div class="card"><b>${c.name}</b><div class="small">Código: ${c.id}</div><button class="btn" onclick='openCamp(${JSON.stringify(c)})'>Abrir</button></div>`}).join(""):"<p class='small'>Nenhuma campanha criada.</p>"}
+function enterLocalCampaignLegacy(){let v=campInput.value.trim().split("/").pop().replace("#camp=","");let c=JSON.parse(localStorage.getItem("camp_"+v));if(c)openCamp(c);else alert("Campanha não encontrada neste navegador.")}
 function openCamp(c){camp=c;campTitle.textContent=c.name;campCode.textContent=c.id;renderCampChars();go("lobby")}
 function copyInvite(){let link=location.href.split("#")[0]+"#camp="+camp.id;navigator.clipboard?.writeText(link);alert("Link copiado: "+link)}
 function renderCampChars(){campChars.innerHTML=camp.chars.length?camp.chars.map(cid=>{let c=chars.find(x=>x.id===cid);return c?`<div class="char" onclick="openChar('${c.id}')"><img src="${c.img||''}"><b>${c.name}</b><div class="small">${c.race}</div></div>`:""}).join(""):"<p class='small'>Nenhum personagem ainda.</p>"}
-function createCharFromCamp(){newChar();let c=chars[chars.length-1];if(camp){camp.chars.push(c.id);localStorage.setItem("camp_"+camp.id,JSON.stringify(camp));}}
-function newChar(){let c={id:rid(),name:"Novo personagem",gender:"Homem",path:"Mestre do Ar",race:"Humano",story:"",affType:"Ar",aff:0,breath:"",blood:"",attrs:Object.fromEntries(ATTR.map(a=>[a,5])),skills:Object.fromEntries(SK.map(s=>[s,0])),pv:25,pe:15,img:"",sun:false,moon:false};chars.push(c);localStorage.setItem("chars",JSON.stringify(chars));openChar(c.id)}
+function createLocalCharFromCampLegacy(){newChar();let c=chars[chars.length-1];if(camp){camp.chars.push(c.id);localStorage.setItem("camp_"+camp.id,JSON.stringify(camp));}}
+function newChar(){let c={id:rid(),name:"Novo personagem",gender:"Homem",path:"Mestre do Ar",race:"Humano",story:"",affType:"Ar",aff:0,breath:"",blood:"",attrs:Object.fromEntries(ATTR.map(a=>[a,5])),skills:Object.fromEntries(SK.map(s=>[s,0])),pv:35,pe:22,img:"",sun:false,moon:false};chars.push(c);localStorage.setItem("chars",JSON.stringify(chars));openChar(c.id)}
 function renderChars(){charList.innerHTML=chars.length?chars.map(c=>`<div class="char" onclick="openChar('${c.id}')"><img src="${c.img||''}"><b>${c.name}</b><div class="small">${c.race} • ${c.gender}</div></div>`).join(""):"<p class='small'>Nenhuma ficha.</p>"}
 function openChar(cid){current=chars.find(c=>c.id===cid);if(!current)return;readOnly=false;fillSheet();go("sheet");applyReadOnly()}
 function fillSheet(){
  const q=id=>$(id);
  q("name").value=current.name||"";q("gender").value=current.gender||"Homem";q("path").value=current.path||"Mestre do Ar";q("race").value=current.race||"Humano";q("story").value=current.story||"";q("affType").value=current.affType||"Ar";q("aff").value=Number(current.aff||0);q("pv").value=Number(current.pv||0);q("pe").value=Number(current.pe||0);q("avatar").src=current.img||"";q("attrs").innerHTML=ATTR.map(a=>`<div class="stat"><span>${a}</span><input data-a="${a}" type="number" min="1" max="7" value="${Number(current.attrs?.[a]??5)}" oninput="recalc()"></div>`).join("");q("skills").innerHTML=SK.map(s=>`<div class="stat"><span>${s}</span><input data-s="${s}" type="number" min="0" max="20" value="${Number(current.skills?.[s]??0)}"></div>`).join("");updateChoices()}
-function recalc(){const v=Number(document.querySelector('[data-a="Vigor"]')?.value||0);$("pv").value=10+v*3;$("pe").value=10+v}
+function recalc(){const v=Number(document.querySelector('[data-a="Vigor"]')?.value||0);const maxPv=10+v*5;const maxPe=7+v*3;const pv=$("pv"),pe=$("pe");if(pv&&!pv.value)pv.value=maxPv;if(pe&&!pe.value)pe.value=maxPe}
 function updateAffinity(){let v=Math.max(0,Math.min(100,Number($("aff").value||0)));$("aff").value=v;if(current)current.aff=v;let k=current?.path==='Sanguíneo'?'Sangue':'Ar';$("affMeter").style.width=v+'%';$("affText").textContent=`Afinidade ${k}: ${v}/100`;$("unlockText").textContent=v>=100?'Afinidade máxima — 5 técnicas disponíveis.':`Próximo marco: ${Math.ceil((v+0.01)/20)*20}/100.`;if(current){renderAbilities();renderDerivativeChoice()}}
 function updateChoices(){
 if(!current)return;
@@ -199,33 +199,47 @@ setupDice();
 /* ===== A CAÇADA V7 — CAMPANHAS ONLINE ===== */
 let sb=null, onlineReady=false, sessionUser=null, readOnly=false;
 const cfg=window.ACACADA_CONFIG&&window.ACACADA_CONFIG.supabaseUrl&&window.ACACADA_CONFIG.supabaseKey?window.ACACADA_CONFIG:{supabaseUrl:"https://papoezyzwaeevnpbzhmm.supabase.co",supabaseKey:"sb_publishable__DTF6PiAw5o-wOQxystiHg_M5bmUVJc"};
-function onlineConfigured(){return cfg.supabaseUrl && cfg.supabaseKey && !cfg.supabaseUrl.includes('COLE_AQUI') && !cfg.supabaseKey.includes('COLE_AQUI')}
-async function initOnline(){
+function onlineConfigured(){return !!(cfg.supabaseUrl&&cfg.supabaseKey&&!String(cfg.supabaseUrl).includes('COLE_AQUI')&&!String(cfg.supabaseKey).includes('COLE_AQUI'))}
+function onlineErrorText(e){return e?.message||e?.error_description||e?.hint||e?.details||String(e||'Erro desconhecido')}
+async function ensureOnline(){
+  if(onlineReady&&sb&&sessionUser)return true;
   const st=document.getElementById('onlineStatus');
-  if(!onlineConfigured()){onlineReady=false;return}
+  if(!onlineConfigured()){onlineReady=false;if(st)st.innerHTML='<b>Configuração do banco ausente.</b> Verifique o config.js.';return false}
+  if(!window.supabase){onlineReady=false;if(st)st.innerHTML='<b>Biblioteca Supabase não carregou.</b> Recarregue a página ou verifique a conexão.';return false}
   try{
-    sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    if(!sb)sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
     let r=await sb.auth.getSession();
-    if(!r.data.session){r=await sb.auth.signInAnonymously()}
     if(r.error)throw r.error;
-    sessionUser=r.data.user; onlineReady=true;
+    if(!r.data.session){r=await sb.auth.signInAnonymously();if(r.error)throw r.error}
+    sessionUser=r.data.user||r.data.session?.user;
+    if(!sessionUser)throw new Error('O Supabase não retornou um usuário anônimo.');
+    onlineReady=true;
     if(st)st.innerHTML='<b>☁ Banco online conectado.</b> Campanhas e fichas da sala podem ser compartilhadas entre celulares.';
-    const m=location.hash.match(/camp=([A-Z0-9-]+)/i); if(m) await openOnlineCampaign(m[1]);
-  }catch(e){console.error(e);onlineReady=false;if(st)st.innerHTML='<b>Não foi possível conectar ao servidor.</b> Tente novamente.'}
+    return true;
+  }catch(e){console.error('Supabase:',e);onlineReady=false;if(st)st.innerHTML='<b>Falha ao conectar ao banco.</b> '+escapeHtml(onlineErrorText(e));return false}
+}
+async function initOnline(){
+  const ok=await ensureOnline();
+  if(!ok)return;
+  const m=location.hash.match(/camp=([A-Z0-9-]+)/i);
+  if(m)await openOnlineCampaign(m[1]);
 }
 function v7Camps(){return JSON.parse(localStorage.getItem('onlineCamps')||'[]')}
 function rememberCamp(c){let a=v7Camps().filter(x=>x.code!==c.code);a.unshift(c);localStorage.setItem('onlineCamps',JSON.stringify(a.slice(0,30)))}
 async function newCampaign(){
- if(!onlineReady) await initOnline();
- if(!onlineReady){alert('Não foi possível conectar ao banco online.');return}
- const name=prompt('Nome da campanha:','A Caçada — Nova Campanha'); if(name===null)return;
- const {data,error}=await sb.rpc('create_campaign',{p_name:name});
- if(error){console.error(error);return alert('Não foi possível criar a campanha: '+error.message)}
- rememberCamp(data);await openOnlineCampaign(data.code);alert('Campanha criada! Código: '+data.code+'\nAgora use “Copiar link da sala” para mandar aos jogadores.');
+ if(!(await ensureOnline()))return;
+ const name=prompt('Nome da campanha:','A Caçada — Nova Campanha');
+ if(name===null)return;
+ const campaignName=name.trim()||'A Caçada — Nova Campanha';
+ const {data,error}=await sb.rpc('create_campaign',{p_name:campaignName});
+ if(error){console.error('create_campaign:',error);alert('Erro ao criar a campanha no Supabase:\n\n'+onlineErrorText(error));return}
+ if(!data?.code){alert('O banco respondeu sem o código da campanha. Verifique a RPC create_campaign.');return}
+ rememberCamp(data);
+ await openOnlineCampaign(data.code);
+ alert('Campanha criada! Código: '+data.code+'\n\nUse “Copiar link da sala” para enviar aos jogadores.');
 }
 async function enterCampaign(){
- if(!onlineReady) await initOnline();
- if(!onlineReady){alert('Não foi possível conectar ao banco online.');return}
+ if(!(await ensureOnline()))return;
  let raw=campInput.value.trim();let code=raw.includes('#camp=')?raw.split('#camp=')[1]:raw.split('/').pop();code=decodeURIComponent(code).replace(/[^A-Z0-9-]/gi,'').toUpperCase();
  if(!code)return alert('Digite o código ou cole o link da campanha.');
  const player=prompt('Seu nome de jogador:','Jogador');if(player===null)return;
@@ -266,8 +280,9 @@ function escapeHtml(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;',
 function openRemoteChar(id){current=chars.find(c=>c._onlineId===id);if(!current)return;readOnly=current._ownerId!==sessionUser?.id;fillSheet();go('sheet');applyReadOnly()}
 function applyReadOnly(){document.querySelectorAll('#sheet input,#sheet select,#sheet textarea,#sheet button').forEach(el=>{if(el.id==='img'||el.textContent.includes('← Voltar'))return;el.disabled=!!readOnly});const s=document.querySelector('#sheet .card:last-child');if(s)s.style.display=readOnly?'none':''}
 async function createCharFromCamp(){
- if(!camp||!onlineReady)return;
- let c={id:rid(),name:'Novo personagem',gender:'Homem',path:'Mestre do Ar',race:'Humano',story:'',affType:'Ar',aff:0,breath:'',blood:'',attrs:Object.fromEntries(ATTR.map(a=>[a,5])),skills:Object.fromEntries(SK.map(s=>[s,0])),pv:25,pe:15,img:'',sun:false,moon:false};
+ if(!camp)return;
+ if(!(await ensureOnline()))return;
+ let c={id:rid(),name:'Novo personagem',gender:'Homem',path:'Mestre do Ar',race:'Humano',story:'',affType:'Ar',aff:0,breath:'',blood:'',attrs:Object.fromEntries(ATTR.map(a=>[a,5])),skills:Object.fromEntries(SK.map(s=>[s,0])),pv:35,pe:22,img:'',sun:false,moon:false};
  chars.push(c);current=c;c._campaignCode=camp.code;localStorage.setItem('chars',JSON.stringify(chars));openChar(c.id);await saveChar(false);await syncCampaign();
 }
 async function saveChar(show=true){
@@ -364,7 +379,8 @@ function fillSheet(){
 }
 const _oldSave=saveChar;saveChar=async function(show=true){if(!current)return;if(readOnly)return alert('Você só pode editar a sua própria ficha.');const inv=document.getElementById('inventory');if(inv)current.inventory=inv.value;return _oldSave(show)};
 const _oldCreate=createCharFromCamp;createCharFromCamp=async function(){return _oldCreate()};
-function renderPassives(){let p=`<div class="passive"><b>Gênero: ${current.gender}</b><br>${g[current.gender]||''}</div>`;if(current.path==='Mestre do Ar')p+=`<div class="passive"><b>Mestre do Ar</b><br>Humano obrigatório. Escolha uma Respiração principal e evolua pela Afinidade.</div>`;if(current.race==='Humano'||current.race==='Oni Amigável')p+=`<div class="passive"><b>Recuperação a cada 2 turnos</b><br>Após completar 2 turnos, pode recuperar +1 PV e +1 PE.</div>`;if(current.race==='Devorador de Oni')p+=`<div class="passive"><b>Forma de Oni</b><br>Enquanto estiver na forma de Oni, recupera +2 PV por turno.</div>`;document.getElementById('passives').innerHTML=p}
+const GENDER_PASSIVES={Homem:'Passivo de gênero não altera as regras básicas.',Mulher:'Passivo de gênero não altera as regras básicas.',Outro:'Passivo de gênero não altera as regras básicas.'};
+function renderPassives(){let p=`<div class="passive"><b>Gênero: ${escapeHtml(current.gender||'')}</b><br>${GENDER_PASSIVES[current.gender]||''}</div>`;if(current.path==='Mestre do Ar')p+=`<div class="passive"><b>Mestre do Ar</b><br>Humano obrigatório. Escolha uma Respiração principal e evolua pela Afinidade.</div>`;if(current.race==='Humano'||current.race==='Oni Amigável')p+=`<div class="passive"><b>Recuperação a cada 2 turnos</b><br>Após completar 2 turnos, pode recuperar +1 PV e +1 PE.</div>`;if(current.race==='Devorador de Oni')p+=`<div class="passive"><b>Forma de Oni</b><br>Enquanto estiver na forma de Oni, recupera +2 PV por turno.</div>`;document.getElementById('passives').innerHTML=p}
 function ensureTurnUI(){const box=document.getElementById('passives');if(!box||document.getElementById('turnControls'))return;const d=document.createElement('div');d.id='turnControls';d.className='notice';d.style.marginTop='10px';d.innerHTML=`<b>Turnos</b><div id="turnText" class="small"></div><button class="btn" onclick="registerTurn()">Registrar 1 turno</button><button id="recover2" class="btn gold" onclick="recoverTwoTurns()" style="display:none">Recuperar +1 PV e +1 PE</button><div id="oniControls" style="margin-top:8px"></div>`;box.appendChild(d)}
 function registerTurn(){if(!current)return;current.humanTurns=Number(current.humanTurns||0)+1;if(current.race==='Devorador de Oni'&&current.oniFormActive){current.pv=Number(current.pv||0)+2;current.oniTurns=Number(current.oniTurns||0)+1}updateTurnUI();saveChar(false)}
 function recoverTwoTurns(){if(!current||Number(current.humanTurns||0)<2)return;current.humanTurns=0;current.pv=Number(current.pv||0)+1;current.pe=Number(current.pe||0)+1;document.getElementById('pv').value=current.pv;document.getElementById('pe').value=current.pe;updateTurnUI();saveChar(false)}
