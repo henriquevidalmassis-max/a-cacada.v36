@@ -39,7 +39,7 @@ html,body{min-height:100%;overscroll-behavior:none}body{-webkit-tap-highlight-co
 <button class="btn" onclick="go('chars')"><b>Minhas fichas</b><br><span class="small">Personagens salvos</span></button>
 </div></div></section>
 
-<section id="campaigns" class="screen"><button class="btn" onclick="go('home')">← Voltar</button><div id="onlineStatus" class="notice" style="margin-top:15px">Conectando ao banco online...</div>
+<section id="campaigns" class="screen"><button class="btn" onclick="go('home')">← Voltar</button><div id="onlineStatus" class="notice" style="margin-top:15px">Campanhas online.</div>
 <div class="card" style="margin-top:15px"><h2>Entrar em campanha</h2><label>Link ou código</label><input id="campInput" placeholder="ACACADA-XXXX ou cole o link"><button class="btn gold" style="margin-top:10px" onclick="enterCampaign()">Entrar</button></div>
 <div class="card" style="margin-top:15px"><h3>Campanhas neste navegador</h3><div id="campList"></div></div></section>
 
@@ -216,14 +216,16 @@ async function initOnline(){
 function v7Camps(){return JSON.parse(localStorage.getItem('onlineCamps')||'[]')}
 function rememberCamp(c){let a=v7Camps().filter(x=>x.code!==c.code);a.unshift(c);localStorage.setItem('onlineCamps',JSON.stringify(a.slice(0,30)))}
 async function newCampaign(){
- if(!onlineReady){alert('O banco online ainda não está configurado. Configure o Supabase no arquivo config.js.');return}
+ if(!onlineReady) await initOnline();
+ if(!onlineReady){alert('Não foi possível conectar ao banco online.');return}
  const name=prompt('Nome da campanha:','A Caçada — Nova Campanha'); if(name===null)return;
  const {data,error}=await sb.rpc('create_campaign',{p_name:name});
  if(error){console.error(error);return alert('Não foi possível criar a campanha: '+error.message)}
  rememberCamp(data);await openOnlineCampaign(data.code);alert('Campanha criada! Código: '+data.code+'\nAgora use “Copiar link da sala” para mandar aos jogadores.');
 }
 async function enterCampaign(){
- if(!onlineReady){alert('O banco online ainda não está configurado.');return}
+ if(!onlineReady) await initOnline();
+ if(!onlineReady){alert('Não foi possível conectar ao banco online.');return}
  let raw=campInput.value.trim();let code=raw.includes('#camp=')?raw.split('#camp=')[1]:raw.split('/').pop();code=decodeURIComponent(code).replace(/[^A-Z0-9-]/gi,'').toUpperCase();
  if(!code)return alert('Digite o código ou cole o link da campanha.');
  const player=prompt('Seu nome de jogador:','Jogador');if(player===null)return;
